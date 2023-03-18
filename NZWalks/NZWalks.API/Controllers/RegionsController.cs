@@ -20,29 +20,93 @@ namespace NZWalks.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllRegions()
+        public async Task<IActionResult> GetAllRegionsAsync()
         {
             var regions = await regionRepository.GetAllAsync();
-
-            //var regionsDTO = new List<Models.DTO.Region>();
-
-            //regions.ToList().ForEach(region =>
-            //{
-            //    regionsDTO.Add(new Models.DTO.Region()
-            //    {
-            //        Id = region.Id,
-            //        Area = region.Area,
-            //        Code = region.Code,
-            //        Lat = region.Lat,
-            //        Long = region.Long,
-            //        Name = region.Name,
-            //        Population = region.Population,
-            //    });
-            //});
 
             var regionsDTO = mapper.Map<List<Models.DTO.Region>>(regions);
 
             return Ok(regionsDTO);
+        }
+
+        [HttpGet]
+        [Route("{id:guid}")]
+        [ActionName("GetRegionAsync")]
+        public async Task<IActionResult> GetRegionAsync(Guid id)
+        {
+            var region = await regionRepository.GetAsync(id);
+
+            if(region == null)
+            {
+                return NotFound();
+            }
+
+            var regionDTO = mapper.Map<Models.DTO.Region>(region);
+
+            return Ok(regionDTO);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddRegionAsync(AddRegionRequest regionRequest)
+        {
+            var region = new Models.Domain.Region()
+            {
+                Code = regionRequest.Code,
+                Area = regionRequest.Area,
+                Lat = regionRequest.Lat,
+                Long = regionRequest.Long,
+                Name = regionRequest.Name,
+                Population = regionRequest.Population
+            };
+
+            region = await regionRepository.AddAsync(region);
+
+            var regionDTO = mapper.Map<Models.DTO.Region>(region);
+
+            return CreatedAtAction(nameof(GetRegionAsync), new {id = regionDTO.Id}, regionDTO);
+        }
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> DeleteRegionAsync(Guid id)
+        {
+            var region = await regionRepository.DeleteAsync(id);
+
+            if (region == null)
+            {
+                return NotFound();
+            }
+
+            var regionDTO = mapper.Map<Models.DTO.Region>(region);
+
+            return Ok(regionDTO);
+        }
+
+        [HttpPut]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> UpdateRegionAsync(
+            [FromRoute] Guid id,
+            [FromBody] UpdateRegionRequest updateRegion)
+        {
+            var region = new Models.Domain.Region()
+            {
+                Area = updateRegion.Area,
+                Lat = updateRegion.Lat,
+                Long = updateRegion.Long,
+                Name= updateRegion.Name,
+                Population= updateRegion.Population
+            };
+
+            region = await regionRepository.UpdateAsync(id, region);
+
+            if (region == null)
+            {
+                return NotFound();
+            }
+
+            var regionDTO = mapper.Map<Models.DTO.Region>(region);
+
+            return Ok(regionDTO);
         }
     }
 }
